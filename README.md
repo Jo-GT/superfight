@@ -22,7 +22,10 @@ The GitHub Pages site for the `main` branch is available at https://jo-gt.github
 | Up | Jump |
 | Down | Dodge |
 | X | Basic attack; clean hits build meter. Press during a jump for an aerial attack |
+| Left / Right + X | Running attack |
+| Up + X | Rising attack |
 | A | Power/ranged attack; costs 1 bar |
+| A while airborne | Air power attack; costs 1 bar |
 | S | Special/ultimate; costs 3 bars |
 | Enter | Start or rematch |
 | Esc | Pause/unpause; open the move list or return to character select |
@@ -33,4 +36,4 @@ Music is loaded from `Music/`: `xmenmain.mp3` loops on the character-select menu
 
 Cyclops' basic attacks chain through four animation stages when hits are continued inside the combo window. The HUD shows the current hit count up to `x10`; Attack1 and Attack4 also use their matching projectile frame sets.
 
-The sprite assets include more complete animation coverage than the current combat slice uses. The next natural systems are character select, tag-in partners, hitbox timing data, audio, and a dedicated CPU behavior layer.
+The current combat slice also uses the supplied running, rising, and air-power animation families for both characters. The next natural systems are tag-in partners, hitbox timing data, knockdowns, grabs, finishers, and more character-specific specials.
