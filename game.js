@@ -31,6 +31,10 @@ let selectedDifficulty = 'easy';
 const W = canvas.width;
 const FLOOR = 574;
 const FIGHTER_SCALE = 1.65;
+const selectAnimationFrames = {
+  cyclops: Array.from({ length: 28 }, (_, frameNumber) => `Selectscreen_${String(frameNumber).padStart(2, '0')}.png`),
+  wolverine: ['Selectscreen_00.png','Selectscreen_01.png','Selectscreen_02_04_06_08.png','Selectscreen_03_05_07_09.png','Selectscreen_10.png','Selectscreen_11.png','Selectscreen_12.png','Selectscreen_13.png','Selectscreen_14.png','Selectscreen_15.png','Selectscreen_16.png','Selectscreen_17.png']
+};
 const specialAnimationFrames = ['Special_000-002.png','Special_003-006.png','Special_007-008.png','Special_009-010.png','Special_011-012.png','Special_013.png','Special_014-016.png','Special_017-019.png','Special_020.png','Special_021-022.png','Special_023-025.png','Special_026.png','Special_027.png','Special_028.png','Special_029.png','Special_030.png','Special_031.png','Special_032.png','Special_033.png','Special_034.png','Special_035.png','Special_036.png','Special_037.png','Special_038.png','Special_039.png','Special_040.png','Special_041.png','Special_042.png','Special_043.png','Special_044.png','Special_045.png','Special_046.png','Special_047.png','Special_048.png','Special_049.png','Special_050.png','Special_051.png','Special_052-053.png','Special_054-055.png','Special_056-057.png','Special_058-059.png','Special_060-061_064-065_068-069.png','Special_062-063_066-067_070-071.png','Special_072-073.png','Special_074-075.png','Special_076-077_080-081_084-085.png','Special_078-079_082-083_086-087.png','Special_088-089_092-093.png','Special_090-091_094-096.png','Special_097-100.png','Special_101-105.png','Special_106-107.png','Special_108-109.png','Special_110.png','Special_111.png','Special_112.png'];
 const assets = {
   cyclops: { root: 'Sprites/Cyclops/01 [Default]/', projectileRoot: 'Sprites/Cyclops/', idle: ['Idle_00.png','Idle_01.png','Idle_02.png','Idle_03.png','Idle_04.png','Idle_05.png','Idle_06.png','Idle_07.png'], walk: ['Walk_00.png','Walk_01.png','Walk_02.png','Walk_03.png','Walk_04.png','Walk_05.png','Walk_06.png','Walk_07.png'], attack: ['Attack1_00.png','Attack1_01.png','Attack1_02.png','Attack1_03.png','Attack1_04.png','Attack1_05.png','Attack1_06.png','Attack1_07.png','Attack1_08.png'], airAttack: ['Attackairstart_00.png','Attackairstart_01.png','Attackairstart_02.png','Attackairstart_03.png','Attackair_00.png','Attackair_01.png','Attackairland_00.png','Attackairland_01.png','Attackairland_02.png','Attackairland_03.png'], power: ['Powerstart_00.png','Powerstart_01.png','Power_00.png','Power_01.png','Power_02.png','Power_03.png','Power_04.png','Power_05.png','Power_06.png'], special: specialAnimationFrames, jump: ['Jump_00.png','Jump_01.png','Jumpapex_00.png','Jumpapex_01.png','Jumpapex_02.png','Jumpfall_00.png','Jumpfall_01.png'], dodge: ['Dodge_00.png','Dodge_01.png','Dodge_02.png','Dodge_03.png','Dodge_04.png','Dodge_05.png'], hit: ['Hitstun_00.png','Hitstun_01.png'] },
@@ -62,18 +66,34 @@ function populateOutfits() {
   outfitSelect.innerHTML = costumeOptions[selectedKind].map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
   outfitSelect.value = selectedCostume;
 }
-function updateSelectSprite(kind) {
+let selectFrame = 0;
+let selectFrameClock = 0;
+function selectSpriteFolder(kind) {
   const folder = costumeOptions[kind].find(([id]) => id === (kind === selectedKind ? selectedCostume : costumeOptions[kind][0][0]))?.[1] || costumeOptions[kind][0][1];
-  const characterFolder = kind === 'cyclops' ? 'Cyclops' : 'Wolverine';
-  document.querySelector(`#${kind}-select-sprite`).src = `Sprites/${characterFolder}/${folder}/Selectscreen_00.png`;
+  return `Sprites/${kind === 'cyclops' ? 'Cyclops' : 'Wolverine'}/${folder}/`;
+}
+function updateSelectSprites() {
+  ['cyclops', 'wolverine'].forEach(kind => {
+    const frames = selectAnimationFrames[kind];
+    document.querySelector(`#${kind}-select-sprite`).src = `${selectSpriteFolder(kind)}${frames[selectFrame % frames.length]}`;
+  });
+}
+function updateSelectAnimation(dt) {
+  if (running) return;
+  selectFrameClock += dt;
+  if (selectFrameClock > 105) {
+    selectFrameClock = 0;
+    selectFrame += 1;
+    updateSelectSprites();
+  }
 }
 function selectCharacter(kind) {
   selectedKind = kind;
   selectedCostume = costumeOptions[kind][0][0];
   document.querySelectorAll('.character-card').forEach(card => card.classList.toggle('selected', card.dataset.character === kind));
   populateOutfits();
-  updateSelectSprite('cyclops');
-  updateSelectSprite('wolverine');
+  selectFrame = 0;
+  updateSelectSprites();
 }
 
 const loaded = new Map();
@@ -121,7 +141,7 @@ let p1 = new Fighter('cyclops', 350, 1), p2 = new Fighter('wolverine', 930, -1, 
 function reset() { setCostume(selectedKind, selectedCostume); const opponentKind = selectedKind === 'cyclops' ? 'wolverine' : 'cyclops'; setCostume(opponentKind, costumeOptions[opponentKind][0][0]); p1 = new Fighter(selectedKind, 350, 1); p2 = new Fighter(opponentKind, 930, -1, true, selectedDifficulty); document.querySelector('#p1-name').textContent = characterNames[selectedKind]; document.querySelector('#p2-name').textContent = characterNames[opponentKind]; document.querySelector('#controls-name').textContent = characterNames[selectedKind]; roundTime = 99; message.textContent = 'FIGHT!'; }
 function drawArena() { const sky = ctx.createLinearGradient(0, 0, 0, FLOOR); sky.addColorStop(0, '#172b35'); sky.addColorStop(1, '#50605b'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, canvas.height); ctx.fillStyle = '#253942'; ctx.fillRect(0, 340, W, FLOOR - 340); ctx.strokeStyle = 'rgba(103,225,224,.18)'; ctx.lineWidth = 2; for (let x = -600; x < W + 600; x += 80) { ctx.beginPath(); ctx.moveTo(W / 2, FLOOR); ctx.lineTo(x, canvas.height); ctx.stroke(); } ctx.strokeStyle = 'rgba(248,201,71,.32)'; ctx.beginPath(); ctx.moveTo(0, FLOOR); ctx.lineTo(W, FLOOR); ctx.stroke(); ctx.fillStyle = '#17252b'; ctx.fillRect(0, FLOOR + 3, W, canvas.height - FLOOR); ctx.fillStyle = 'rgba(248,201,71,.5)'; ctx.font = '700 16px Space Mono'; ctx.fillText('SECTOR 09', 42, 48); ctx.fillText('NO EXIT', W - 130, 48); }
 function updateHud() { document.querySelector('#p1-health').style.width = `${p1.health / p1.maxHealth * 100}%`; document.querySelector('#p2-health').style.width = `${p2.health / p2.maxHealth * 100}%`; document.querySelector('#p1-meter').style.width = `${p1.meter / 3 * 100}%`; document.querySelector('#p2-meter').style.width = `${p2.meter / 3 * 100}%`; document.querySelector('#p1-combo').textContent = `x${p1.combo}`; document.querySelector('#p2-combo').textContent = `x${p2.combo}`; }
-function loop(now) { const dt = Math.min(34, now - last); last = now; if (running && !paused) { secondClock += dt; if (secondClock > 1000) { secondClock = 0; roundTime = Math.max(0, roundTime - 1); } p1.update(dt, p2); p2.update(dt, p1); projectiles = projectiles.filter(projectile => projectile.update(dt, projectile.owner === p1 ? p2 : p1)); updateHud(); if (p1.health <= 0 || p2.health <= 0 || roundTime <= 0) { running = false; const winner = p1.health > p2.health ? 'CYCLOPS TAKES IT' : 'WOLVERINE TAKES IT'; message.textContent = roundTime <= 0 && p1.health === p2.health ? 'TIME' : winner; footerState.textContent = 'PRESS ENTER TO REMATCH'; overlay.classList.remove('hidden'); overlay.querySelector('h2').textContent = message.textContent; overlay.querySelector('.eyebrow').textContent = 'ROUND OVER'; } timerEl.textContent = String(roundTime).padStart(2, '0'); } drawArena(); p1.draw(); p2.draw(); projectiles.forEach(projectile => projectile.draw()); pressed.clear(); requestAnimationFrame(loop); }
+function loop(now) { const dt = Math.min(34, now - last); last = now; updateSelectAnimation(dt); if (running && !paused) { secondClock += dt; if (secondClock > 1000) { secondClock = 0; roundTime = Math.max(0, roundTime - 1); } p1.update(dt, p2); p2.update(dt, p1); projectiles = projectiles.filter(projectile => projectile.update(dt, projectile.owner === p1 ? p2 : p1)); updateHud(); if (p1.health <= 0 || p2.health <= 0 || roundTime <= 0) { running = false; const winner = p1.health > p2.health ? 'CYCLOPS TAKES IT' : 'WOLVERINE TAKES IT'; message.textContent = roundTime <= 0 && p1.health === p2.health ? 'TIME' : winner; footerState.textContent = 'PRESS ENTER TO REMATCH'; overlay.classList.remove('hidden'); overlay.querySelector('h2').textContent = message.textContent; overlay.querySelector('.eyebrow').textContent = 'ROUND OVER'; } timerEl.textContent = String(roundTime).padStart(2, '0'); } drawArena(); p1.draw(); p2.draw(); projectiles.forEach(projectile => projectile.draw()); pressed.clear(); requestAnimationFrame(loop); }
 function setPauseView(showMoves) { pauseMenu.classList.toggle('hidden', showMoves); moveList.classList.toggle('hidden', !showMoves); moveListName.textContent = characterNames[selectedKind]; }
 function togglePause() { if (!running) return; paused = !paused; pauseOverlay.classList.toggle('hidden', !paused); if (paused) { fightMusic.pause(); setPauseView(false); footerState.textContent = 'GAME PAUSED // ESC RESUME'; } else { playMusic(fightMusic); footerState.textContent = `ROUND ACTIVE // ${selectedDifficulty.toUpperCase()} CPU`; } }
 function returnToMenu() { running = false; paused = false; projectiles = []; pauseOverlay.classList.add('hidden'); menuScreen.classList.remove('hidden'); overlay.classList.add('hidden'); playMusic(menuMusic); footerState.textContent = 'PRESS ENTER TO BEGIN // ESC PAUSE'; }
@@ -130,7 +150,7 @@ window.addEventListener('keydown', event => { const key = event.key.length === 1
 window.addEventListener('keyup', event => { const key = event.key.length === 1 ? event.key.toLowerCase() : event.key; keys.delete(key); });
 document.querySelectorAll('.character-card').forEach(card => card.addEventListener('click', () => selectCharacter(card.dataset.character)));
 document.querySelectorAll('.difficulty').forEach(button => button.addEventListener('click', () => { selectedDifficulty = button.dataset.difficulty; document.querySelectorAll('.difficulty').forEach(option => option.classList.toggle('selected', option === button)); }));
-outfitSelect.addEventListener('change', () => { selectedCostume = outfitSelect.value; updateSelectSprite(selectedKind); });
+outfitSelect.addEventListener('change', () => { selectedCostume = outfitSelect.value; selectFrame = 0; updateSelectSprites(); });
 document.querySelector('#start-button').addEventListener('click', start);
 document.querySelector('#rematch-button').addEventListener('click', start);
 document.querySelector('#resume-button').addEventListener('click', () => { if (paused) togglePause(); });
@@ -138,7 +158,6 @@ document.querySelector('#moves-button').addEventListener('click', () => setPause
 document.querySelector('#back-pause-button').addEventListener('click', () => setPauseView(false));
 document.querySelector('#menu-button').addEventListener('click', returnToMenu);
 populateOutfits();
-updateSelectSprite('cyclops');
-updateSelectSprite('wolverine');
+updateSelectSprites();
 document.addEventListener('pointerdown', () => { if (!running && !paused) playMusic(menuMusic); }, { once: true });
 requestAnimationFrame(loop);

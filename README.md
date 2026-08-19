@@ -25,7 +25,7 @@ Then visit `http://127.0.0.1:5173/`.
 | Enter | Start or rematch |
 | Esc | Pause/unpause; open the move list or return to character select |
 
-The arcade menu also lets Player 1 choose Cyclops or Wolverine and select one of three available costume folders. The opponent uses the other character and starts in its default costume.
+The arcade menu also lets Player 1 choose Cyclops or Wolverine and select one of three available costume folders. Both character cards use their animated `Selectscreen_*` sprite sequences, and the preview resets to the selected outfit. The opponent uses the other character and starts in its default costume.
 
 Music is loaded from `Music/`: `xmenmain.mp3` loops on the character-select menu and `BGM.mp3` loops during fights. Fight music pauses with `Esc` and resumes when the match resumes.
 
