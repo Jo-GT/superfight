@@ -1,8 +1,13 @@
+const http = require('http');
 const { WebSocketServer } = require('ws');
 
 const port = Number(process.env.PORT) || 8080;
 const rooms = new Map();
-const server = new WebSocketServer({ port });
+const httpServer = http.createServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  response.end('SUPERFIGHT lobby server is running.');
+});
+const server = new WebSocketServer({ server: httpServer });
 
 function roomCode() {
   let code = '';
@@ -67,4 +72,4 @@ server.on('connection', socket => {
   socket.on('close', () => leaveRoom(socket));
 });
 
-console.log(`SUPERFIGHT lobby server listening on ws://localhost:${port}`);
+httpServer.listen(port, () => console.log(`SUPERFIGHT lobby server listening on port ${port}`));
