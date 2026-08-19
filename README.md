@@ -12,6 +12,8 @@ py -m http.server 5173
 
 Then visit `http://127.0.0.1:5173/`.
 
+The GitHub Pages site for the `main` branch is available at https://jo-gt.github.io/superfight/ once Pages has finished publishing.
+
 ### Player controls
 
 | Input | Action |
@@ -27,7 +29,7 @@ Then visit `http://127.0.0.1:5173/`.
 
 The arcade menu also lets Player 1 choose Cyclops or Wolverine and select one of three available costume folders. Both character cards use their animated `Selectscreen_*` sprite sequences, and the preview resets to the selected outfit. The opponent uses the other character and starts in its default costume.
 
-Music is loaded from `Music/`: `xmenmain.mp3` loops on the character-select menu and `BGM.mp3` loops during fights. Fight music pauses with `Esc` and resumes when the match resumes.
+Music is loaded from `Music/`: `xmenmain.mp3` loops on the character-select menu and `BGM.mp3` loops during fights. Click `ENABLE SOUND` once in the browser to satisfy autoplay permission; the control then becomes `SOUND ON`. Fight music pauses with `Esc` and resumes when the match resumes.
 
 Cyclops' basic attacks chain through four animation stages when hits are continued inside the combo window. The HUD shows the current hit count up to `x10`; Attack1 and Attack4 also use their matching projectile frame sets.
 

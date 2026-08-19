@@ -14,6 +14,7 @@ const moveList = document.querySelector('#move-list');
 const moveListName = document.querySelector('#move-list-name');
 const menuMusic = document.querySelector('#menu-music');
 const fightMusic = document.querySelector('#fight-music');
+const soundButton = document.querySelector('#sound-button');
 const characterNames = { cyclops: 'CYCLOPS', wolverine: 'WOLVERINE' };
 const costumeOptions = {
   cyclops: [['default', '01 [Default]'], ['red', '03 [Red]'], ['cable', "07 [Cable '97]"]],
@@ -133,9 +134,11 @@ class Fighter {
 }
 
 let running = false, paused = false, roundTime = 99, last = performance.now(), secondClock = 0;
+let soundEnabled = false;
 menuMusic.volume = .55;
 fightMusic.volume = .45;
-function playMusic(track) { const otherTrack = track === menuMusic ? fightMusic : menuMusic; otherTrack.pause(); track.currentTime = track.currentTime || 0; track.play().catch(() => {}); }
+function updateSoundButton() { soundButton.textContent = soundEnabled ? 'SOUND ON' : 'ENABLE SOUND'; }
+function playMusic(track) { const otherTrack = track === menuMusic ? fightMusic : menuMusic; otherTrack.pause(); if (!soundEnabled) return; track.currentTime = track.currentTime || 0; track.play().catch(() => {}); }
 function stopMusic() { menuMusic.pause(); fightMusic.pause(); }
 let p1 = new Fighter('cyclops', 350, 1), p2 = new Fighter('wolverine', 930, -1, true, selectedDifficulty);
 function reset() { setCostume(selectedKind, selectedCostume); const opponentKind = selectedKind === 'cyclops' ? 'wolverine' : 'cyclops'; setCostume(opponentKind, costumeOptions[opponentKind][0][0]); p1 = new Fighter(selectedKind, 350, 1); p2 = new Fighter(opponentKind, 930, -1, true, selectedDifficulty); document.querySelector('#p1-name').textContent = characterNames[selectedKind]; document.querySelector('#p2-name').textContent = characterNames[opponentKind]; document.querySelector('#controls-name').textContent = characterNames[selectedKind]; roundTime = 99; message.textContent = 'FIGHT!'; }
@@ -157,7 +160,9 @@ document.querySelector('#resume-button').addEventListener('click', () => { if (p
 document.querySelector('#moves-button').addEventListener('click', () => setPauseView(true));
 document.querySelector('#back-pause-button').addEventListener('click', () => setPauseView(false));
 document.querySelector('#menu-button').addEventListener('click', returnToMenu);
+soundButton.addEventListener('click', () => { soundEnabled = !soundEnabled; if (soundEnabled) playMusic(running ? fightMusic : menuMusic); else stopMusic(); updateSoundButton(); });
 populateOutfits();
 updateSelectSprites();
+updateSoundButton();
 document.addEventListener('pointerdown', () => { if (!running && !paused) playMusic(menuMusic); }, { once: true });
 requestAnimationFrame(loop);
