@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <audio id="menu-music" src="Music/xmenmain.mp3" loop preload="auto"></audio>
+  <audio id="fight-music" src="Music/BGM.mp3" loop preload="auto"></audio>
   <main class="shell">
     <header class="masthead">
       <div>
@@ -21,8 +23,8 @@
         <div class="menu-heading"><p class="eyebrow">SUPERFIGHT // CHARACTER SELECT</p><h2>Choose your fighter</h2><span class="menu-subtitle">INSERT COIN // LOCAL ARCADE MODE</span></div>
         <div class="select-layout">
           <div class="character-grid" role="group" aria-label="Character selection">
-            <button class="character-card selected" data-character="cyclops" type="button"><span class="card-number">01</span><strong>CYCLOPS</strong><small>RANGED // CONTROL</small></button>
-            <button class="character-card" data-character="wolverine" type="button"><span class="card-number">02</span><strong>WOLVERINE</strong><small>RUSH // PRESSURE</small></button>
+            <button class="character-card selected" data-character="cyclops" type="button"><img id="cyclops-select-sprite" src="Sprites/Cyclops/01%20%5BDefault%5D/Selectscreen_00.png" alt="Cyclops select screen sprite"><span class="card-number">01</span><strong>CYCLOPS</strong><small>RANGED // CONTROL</small></button>
+            <button class="character-card" data-character="wolverine" type="button"><img id="wolverine-select-sprite" src="Sprites/Wolverine/04%20%5BBlue%5D/Selectscreen_00.png" alt="Wolverine select screen sprite"><span class="card-number">02</span><strong>WOLVERINE</strong><small>RUSH // PRESSURE</small></button>
           </div>
           <div class="menu-options">
             <label>OUTFIT<select id="outfit-select"></select></label>
