@@ -19,7 +19,7 @@ Then visit `http://127.0.0.1:5173/`.
 | Left / Right | Move and face the opponent |
 | Up | Jump |
 | Down | Dodge |
-| X | Basic attack; clean hits build meter |
+| X | Basic attack; clean hits build meter. Press during a jump for an aerial attack |
 | A | Power/ranged attack; costs 1 bar |
 | S | Special/ultimate; costs 3 bars |
 | Enter | Start or rematch |
