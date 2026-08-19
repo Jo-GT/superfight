@@ -2,7 +2,7 @@
 
 ## Arcade prototype
 
-The first playable slice is a browser-based 1v1 training build using the supplied Cyclops and Wolverine sprite folders. It includes local movement, jump, dodge frames with brief invulnerability, basic attacks, a combo power meter, a repeatable charged power attack, a three-bar special, health, a round timer, and a CPU opponent with selectable Easy, Normal, and Hard behavior.
+The first playable slice is a browser-based 1v1 training build using the supplied Cyclops and Wolverine sprite folders. It includes local movement, jump, dodge frames with brief invulnerability, basic attacks, a combo power meter, a repeatable charged power attack, a three-bar special, health, a round timer, and a CPU opponent with selectable Easy, Normal, and Hard behavior. Cyclops' power and special attacks now launch the supplied beam/projectile frame sequences as independent moving hitboxes.
 
 Open [index.html](index.html) directly in a browser, or serve the repository from its root:
 
@@ -25,5 +25,7 @@ Then visit `http://127.0.0.1:5173/`.
 | Enter | Start or rematch |
 
 The arcade menu also lets Player 1 choose Cyclops or Wolverine and select one of three available costume folders. The opponent uses the other character and starts in its default costume.
+
+Cyclops' basic attacks chain through four animation stages when hits are continued inside the combo window. The HUD shows the current hit count up to `x10`; Attack1 and Attack4 also use their matching projectile frame sets.
 
 The sprite assets include more complete animation coverage than the current combat slice uses. The next natural systems are character select, tag-in partners, hitbox timing data, audio, and a dedicated CPU behavior layer.
