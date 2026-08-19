@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SUPERFIGHT // Arcade Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="kicker">SUPERFIGHT // TRAINING BUILD 01</p>
+        <h1>Clash Protocol</h1>
+      </div>
+      <div class="status"><span class="status-dot"></span>LOCAL // 1V1</div>
+    </header>
+
+    <section class="cabinet" aria-label="Superfight game">
+      <div id="menu-screen" class="menu-screen">
+        <div class="menu-heading"><p class="eyebrow">SUPERFIGHT // CHARACTER SELECT</p><h2>Choose your fighter</h2><span class="menu-subtitle">INSERT COIN // LOCAL ARCADE MODE</span></div>
+        <div class="select-layout">
+          <div class="character-grid" role="group" aria-label="Character selection">
+            <button class="character-card selected" data-character="cyclops" type="button"><span class="card-number">01</span><strong>CYCLOPS</strong><small>RANGED // CONTROL</small></button>
+            <button class="character-card" data-character="wolverine" type="button"><span class="card-number">02</span><strong>WOLVERINE</strong><small>RUSH // PRESSURE</small></button>
+          </div>
+          <div class="menu-options">
+            <label>OUTFIT<select id="outfit-select"></select></label>
+            <div class="difficulty-picker"><span>CPU DIFFICULTY</span><div class="difficulty-options"><button class="difficulty selected" data-difficulty="easy" type="button">EASY</button><button class="difficulty" data-difficulty="normal" type="button">NORMAL</button><button class="difficulty" data-difficulty="hard" type="button">HARD</button></div></div>
+          </div>
+        </div>
+        <div class="menu-footer"><span>PLAYER 1 READY</span><button id="start-button" type="button">START MATCH <span>↵</span></button></div>
+      </div>
+      <div class="hud">
+        <div class="fighter-block cyclops-block">
+          <div class="fighter-name"><span class="name-index">01</span> <span id="p1-name">CYCLOPS</span></div>
+          <div class="health-track"><div id="p1-health" class="health-fill health-cyclops"></div></div>
+          <div class="meter-row"><span>COMBO POWER</span><div class="meter-track"><div id="p1-meter" class="meter-fill meter-cyclops"></div></div></div>
+        </div>
+        <div class="round-readout"><span id="round-label">ROUND 01</span><strong id="timer">99</strong><span id="message">FIGHT!</span></div>
+        <div class="fighter-block wolverine-block">
+          <div class="fighter-name"><span class="name-index">02</span> <span id="p2-name">WOLVERINE</span></div>
+          <div class="health-track"><div id="p2-health" class="health-fill health-wolverine"></div></div>
+          <div class="meter-row"><span>COMBO POWER</span><div class="meter-track"><div id="p2-meter" class="meter-fill meter-wolverine"></div></div></div>
+        </div>
+      </div>
+      <div class="arena-wrap">
+        <canvas id="arena" width="1280" height="720" aria-label="Playable fighting game arena"></canvas>
+        <div class="scanlines"></div>
+        <div id="start-overlay" class="start-overlay">
+          <p class="eyebrow">ROUND ONE</p>
+          <h2>Choose your opening.</h2>
+          <p>Build charge with clean hits. Spend one bar on POWER, or three bars on SPECIAL.</p>
+          <button id="rematch-button" type="button">REMATCH <span>↵</span></button>
+        </div>
+      </div>
+      <div class="controls">
+        <div><span class="control-player">P1 / CYCLOPS</span><span class="keys"><b>←</b><b>→</b> move <b>↑</b> jump <b>↓</b> dodge <b>X</b> attack <b>A</b> power <b>S</b> special</span></div>
+        <div class="control-note">P2 AI // TAP-IN READY</div>
+      </div>
+    </section>
+    <footer><span>ASSET DECK: MARVEL COSMIC INVASION RIP</span><span id="footer-state">PRESS ENTER TO BEGIN</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
