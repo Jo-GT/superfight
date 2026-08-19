@@ -47,6 +47,19 @@
       <div class="arena-wrap">
         <canvas id="arena" width="1280" height="720" aria-label="Playable fighting game arena"></canvas>
         <div class="scanlines"></div>
+        <div id="pause-overlay" class="pause-overlay hidden">
+          <div id="pause-menu" class="pause-panel">
+            <p class="eyebrow">SYSTEM PAUSED</p>
+            <h2>Break in the fight</h2>
+            <div class="pause-actions"><button id="resume-button" type="button">RESUME <span>ESC</span></button><button id="moves-button" type="button">MOVE LIST</button><button id="menu-button" type="button">CHARACTER SELECT</button></div>
+          </div>
+          <div id="move-list" class="pause-panel move-list hidden">
+            <p class="eyebrow">COMMAND FILE // <span id="move-list-name">CYCLOPS</span></p>
+            <h2>Move list</h2>
+            <div class="move-rows"><div><b>← →</b><span>Move / face opponent</span></div><div><b>↑</b><span>Jump</span></div><div><b>↓</b><span>Dodge / invulnerable step</span></div><div><b>X</b><span>Basic combo / jump attack</span></div><div><b>A</b><span>Power projectile // 1 bar</span></div><div><b>S</b><span>Special beam // 3 bars</span></div></div>
+            <button id="back-pause-button" type="button">BACK <span>ESC</span></button>
+          </div>
+        </div>
         <div id="start-overlay" class="start-overlay">
           <p class="eyebrow">ROUND ONE</p>
           <h2>Choose your opening.</h2>
@@ -59,7 +72,7 @@
         <div class="control-note">P2 AI // TAP-IN READY</div>
       </div>
     </section>
-    <footer><span>ASSET DECK: MARVEL COSMIC INVASION RIP</span><span id="footer-state">PRESS ENTER TO BEGIN</span></footer>
+    <footer><span>ASSET DECK: MARVEL COSMIC INVASION RIP</span><span id="footer-state">PRESS ENTER TO BEGIN // ESC PAUSE</span></footer>
   </main>
   <script src="game.js"></script>
 </body>

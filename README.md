@@ -23,6 +23,7 @@ Then visit `http://127.0.0.1:5173/`.
 | A | Power/ranged attack; costs 1 bar |
 | S | Special/ultimate; costs 3 bars |
 | Enter | Start or rematch |
+| Esc | Pause/unpause; open the move list or return to character select |
 
 The arcade menu also lets Player 1 choose Cyclops or Wolverine and select one of three available costume folders. The opponent uses the other character and starts in its default costume.
 
