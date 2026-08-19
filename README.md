@@ -12,6 +12,10 @@ py -m http.server 5173
 
 Then visit `http://127.0.0.1:5173/`.
 
+### Online 1v1 development server
+
+The CPU mode remains available from the menu. To test the online mode locally, install Node.js, run `npm install`, then start the lobby server in a second terminal with `npm start`. Serve the game from the repository root with `py -m http.server 5173`, open it in two browser windows, choose `1V1 ONLINE`, and use the lobby code from the first window in the second.
+
 The GitHub Pages site for the `main` branch is available at https://jo-gt.github.io/superfight/ once Pages has finished publishing.
 
 ### Player controls
