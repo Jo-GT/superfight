@@ -51,13 +51,21 @@ var combo_label: Label
 var music: AudioStreamPlayer
 var costume_select: OptionButton
 var character_status: Label
+var animation_cache := {}
+var projectile_frames: SpriteFrames
 
 func _ready() -> void:
 	get_viewport().size = ARENA_SIZE
+	projectile_frames = _build_projectile_frames()
+	_warm_fighter_assets()
 	_build_audio()
 	_build_menu()
 	_build_hud()
 	queue_redraw()
+
+func _warm_fighter_assets() -> void:
+	animation_cache[CYCLOPS_FOLDER] = _build_fighter_frames(CYCLOPS_FOLDER)
+	animation_cache[WOLVERINE_FOLDER] = _build_fighter_frames(WOLVERINE_FOLDER)
 
 func _process(delta: float) -> void:
 	if match_active:
@@ -262,12 +270,14 @@ func _choose_cyclops() -> void:
 	selected_kind = "cyclops"
 	selected_costume = "default"
 	_populate_costumes()
+	_warm_selected_fighter()
 	_update_menu_status()
 
 func _choose_wolverine() -> void:
 	selected_kind = "wolverine"
 	selected_costume = "blue"
 	_populate_costumes()
+	_warm_selected_fighter()
 	_update_menu_status()
 
 func _populate_costumes() -> void:
@@ -284,7 +294,13 @@ func _populate_costumes() -> void:
 func _choose_costume(index: int) -> void:
 	var costumes := ["default", "red", "cable"] if selected_kind == "cyclops" else ["blue", "classic", "stealth"]
 	selected_costume = costumes[index]
+	_warm_selected_fighter()
 	character_status.text = "%s // %s" % [selected_kind.to_upper(), selected_costume.to_upper()]
+
+func _warm_selected_fighter() -> void:
+	var folder := _selected_folder()
+	if not animation_cache.has(folder):
+		animation_cache[folder] = _build_fighter_frames(folder)
 
 func _cycle_difficulty() -> void:
 	var difficulties := ["easy", "normal", "hard"]
@@ -349,6 +365,16 @@ func _selected_folder() -> String:
 
 func _create_animated_fighter(folder: String) -> AnimatedSprite2D:
 	var sprite := AnimatedSprite2D.new()
+	var frames: SpriteFrames = animation_cache.get(folder)
+	if frames == null:
+		frames = _build_fighter_frames(folder)
+		animation_cache[folder] = frames
+	sprite.sprite_frames = frames
+	sprite.animation = "idle"
+	sprite.play()
+	return sprite
+
+func _build_fighter_frames(folder: String) -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	frames.remove_animation("default")
 	_add_animation(frames, "idle", folder, "Idle_")
@@ -363,22 +389,22 @@ func _create_animated_fighter(folder: String) -> AnimatedSprite2D:
 	_add_animation(frames, "special", folder, "Special")
 	_add_animation(frames, "dodge", folder, "Dodge_")
 	_add_animation(frames, "hit", folder, "Hitstun_")
-	sprite.sprite_frames = frames
-	sprite.animation = "idle"
-	sprite.play()
-	return sprite
+	return frames
 
 func _create_projectile() -> AnimatedSprite2D:
 	var sprite := AnimatedSprite2D.new()
-	var frames := SpriteFrames.new()
-	frames.remove_animation("default")
-	_add_animation(frames, "power", CYCLOPS_PROJECTILES, "Powerprojectil")
-	_add_animation(frames, "special", CYCLOPS_PROJECTILES, "Specialprojectile_")
-	sprite.sprite_frames = frames
+	sprite.sprite_frames = projectile_frames
 	sprite.animation = "power"
 	sprite.scale = Vector2(0.9, 0.9)
 	add_child(sprite)
 	return sprite
+
+func _build_projectile_frames() -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	frames.remove_animation("default")
+	_add_animation(frames, "power", CYCLOPS_PROJECTILES, "Powerprojectil")
+	_add_animation(frames, "special", CYCLOPS_PROJECTILES, "Specialprojectile_")
+	return frames
 
 func _add_animation(frames: SpriteFrames, animation_name: String, folder: String, prefix: String) -> void:
 	var directory := DirAccess.open(folder)

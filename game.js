@@ -78,6 +78,18 @@ const projectileFrames = {
 function setCostume(kind, costume) {
   const folder = costumeOptions[kind].find(([id]) => id === costume)?.[1] || costumeOptions[kind][0][1];
   assets[kind].root = `Sprites/${kind === 'cyclops' ? 'Cyclops' : 'Wolverine'}/${folder}/`;
+  preloadFighterAssets(kind);
+}
+function defaultRoot(kind) { return `Sprites/${kind === 'cyclops' ? 'Cyclops' : 'Wolverine'}/${costumeOptions[kind][0][1]}/`; }
+function fallbackFramePath(fighter, state, frame) {
+  const list = state === 'attack' && assets[fighter.kind].attackStages ? assets[fighter.kind].attackStages[fighter.attackStage - 1] : assets[fighter.kind][state] || assets[fighter.kind].idle;
+  return defaultRoot(fighter.kind) + list[Math.min(frame, list.length - 1)];
+}
+function preloadFighterAssets(kind) {
+  const root = assets[kind].root;
+  const states = Object.keys(assets[kind]).filter(state => Array.isArray(assets[kind][state]));
+  states.forEach(state => assets[kind][state].forEach(frame => imageFor(root + frame, defaultRoot(kind) + frame)));
+  if (assets[kind].attackStages) assets[kind].attackStages.flat().forEach(frame => imageFor(root + frame, defaultRoot(kind) + frame));
 }
 function populateOutfits() {
   outfitSelect.innerHTML = costumeOptions[selectedKind].map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
@@ -92,7 +104,11 @@ function selectSpriteFolder(kind) {
 function updateSelectSprites() {
   ['cyclops', 'wolverine'].forEach(kind => {
     const frames = selectAnimationFrames[kind];
-    document.querySelector(`#${kind}-select-sprite`).src = `${selectSpriteFolder(kind)}${frames[selectFrame % frames.length]}`;
+    const sprite = document.querySelector(`#${kind}-select-sprite`);
+    const selectedPath = `${selectSpriteFolder(kind)}${frames[selectFrame % frames.length]}`;
+    const fallbackPath = `${defaultRoot(kind)}${frames[selectFrame % frames.length]}`;
+    sprite.onerror = () => { sprite.onerror = null; sprite.src = fallbackPath; };
+    sprite.src = selectedPath;
   });
 }
 function updateSelectAnimation(dt) {
@@ -114,7 +130,15 @@ function selectCharacter(kind) {
 }
 
 const loaded = new Map();
-function imageFor(path) { if (!loaded.has(path)) { const image = new Image(); image.src = path; loaded.set(path, image); } return loaded.get(path); }
+function imageFor(path, fallbackPath = '') {
+  if (!loaded.has(path)) {
+    const image = new Image();
+    image.onerror = () => { if (fallbackPath && fallbackPath !== path) { image.onerror = null; image.src = fallbackPath; } };
+    image.src = path;
+    loaded.set(path, image);
+  }
+  return loaded.get(path);
+}
 function framePath(fighter, state, frame) { const list = state === 'attack' && assets[fighter.kind].attackStages ? assets[fighter.kind].attackStages[fighter.attackStage - 1] : assets[fighter.kind][state] || assets[fighter.kind].idle; return assets[fighter.kind].root + list[Math.min(frame, list.length - 1)]; }
 let projectiles = [];
 
@@ -125,7 +149,7 @@ class Projectile {
 }
 
 class Fighter {
-  constructor(kind, x, facing, cpu = false, difficulty = 'normal') { this.kind = kind; this.x = x; this.y = FLOOR; this.vy = 0; this.facing = facing; this.cpu = cpu; this.aiProfile = difficultyProfiles[difficulty]; this.aiDecisionClock = 260; this.maxHealth = 120; this.health = this.maxHealth; this.meter = 0; this.state = 'idle'; this.frame = 0; this.frameClock = 0; this.stateTime = 0; this.attackCooldown = 0; this.invulnerable = 0; this.hitFlash = 0; this.combo = 0; this.comboTimer = 0; this.chainStage = 0; this.attackStage = 1; this.projectileSpawned = false; this.strikeConfirmed = false; }
+  constructor(kind, x, facing, cpu = false, difficulty = 'normal') { this.kind = kind; this.x = x; this.y = FLOOR; this.vy = 0; this.facing = facing; this.cpu = cpu; this.aiProfile = difficultyProfiles[difficulty]; this.aiDecisionClock = 260; this.maxHealth = 120; this.health = this.maxHealth; this.meter = 0; this.state = 'idle'; this.frame = 0; this.frameClock = 0; this.stateTime = 0; this.attackCooldown = 0; this.invulnerable = 0; this.hitFlash = 0; this.combo = 0; this.comboTimer = 0; this.chainStage = 0; this.attackStage = 1; this.projectileSpawned = false; this.strikeConfirmed = false; this.lastImage = null; }
   get grounded() { return this.y >= FLOOR; }
   setState(state) { if (this.state !== state) { this.state = state; this.frame = 0; this.frameClock = 0; this.stateTime = 0; } }
   animate(dt) { this.frameClock += dt; this.stateTime += dt; const rate = this.state === 'idle' ? 115 : this.state === 'special' ? 42 : 82; if (this.frameClock > rate) { this.frameClock = 0; this.frame += 1; const frames = this.state === 'attack' && assets[this.kind].attackStages ? assets[this.kind].attackStages[this.attackStage - 1] : assets[this.kind][this.state] || assets[this.kind].idle; if (this.frame >= frames.length) { if (['attack','airAttack','airPower','sprintAttack','risingAttack','power','special','dodge','hit'].includes(this.state)) this.setState('idle'); else this.frame = 0; } } }
@@ -146,7 +170,7 @@ class Fighter {
   playerInput(dt, inputKeys, inputPressed) { const left = inputKeys.has('ArrowLeft'), right = inputKeys.has('ArrowRight'), moving = left || right; if (inputPressed.has('ArrowDown')) { this.setState('dodge'); this.invulnerable = 300; return; } if (inputPressed.has('ArrowUp') && inputPressed.has('x')) { if (this.attack('risingAttack')) { this.y -= 2; return; } } if (inputPressed.has('x')) { if (this.attack(moving ? 'sprintAttack' : 'attack')) return; } if (inputPressed.has('a') && this.attack('power')) return; if (inputPressed.has('s') && this.attack('special')) return; if (moving) { this.x += (right ? 1 : -1) * 4.2 * dt / 16; this.setState('walk'); } else this.setState('idle'); if (inputPressed.has('ArrowUp')) { this.vy = -15; this.y -= 2; this.setState('jump'); } }
   ai(opponent, dt) { const profile = this.aiProfile; const distance = Math.abs(opponent.x - this.x); this.aiDecisionClock -= dt; if (profile.reaction && opponent.state === 'attack' && distance < 210 && Math.random() < profile.reaction * dt / 16) { this.setState('dodge'); this.invulnerable = 300; return; } if (distance > profile.idealRange) { this.x += this.facing * profile.approachSpeed * dt / 16; this.setState('walk'); return; } if (this.attackCooldown <= 0 && this.aiDecisionClock <= 0 && Math.random() < profile.attackChance * dt / 16) { this.aiDecisionClock = 260 / (profile.approachSpeed / 1.2); if (this.meter >= 3 && Math.random() < profile.specialChance) this.attack('special'); else if (this.meter >= 1 && Math.random() < .3 + profile.specialChance) this.attack('power'); else this.attack('attack'); return; } this.setState('idle'); }
   checkStrike(opponent) { if (this.strikeConfirmed) return; const isCyclopsBeam = this.kind === 'cyclops' && (this.state === 'power' || this.state === 'special'); if (isCyclopsBeam) return; const windows = this.state === 'airAttack' || this.state === 'airPower' ? [140, 420] : this.state === 'risingAttack' ? [160, 420] : this.state === 'sprintAttack' ? [150, 360] : this.state === 'attack' ? [140, 330] : this.state === 'power' ? [260, 560] : [480, 900]; const [start, end] = windows; if (this.stateTime < start || this.stateTime > end) return; const reach = this.state === 'airAttack' || this.state === 'airPower' ? 170 : this.state === 'risingAttack' ? 145 : this.state === 'sprintAttack' ? 210 : this.state === 'special' ? 260 : this.state === 'power' ? 210 : 175; const damage = this.state === 'airPower' ? 12 : this.state === 'airAttack' ? 8 : this.state === 'risingAttack' ? 10 : this.state === 'sprintAttack' ? 9 : this.state === 'special' ? 24 : this.state === 'power' ? 12 : 6; if (Math.abs(opponent.x - this.x) < reach && Math.abs(opponent.y - this.y) < 180) { opponent.takeHit(damage, this.facing * 28); this.meter = Math.min(3, this.meter + .6); if (['attack','airAttack','airPower','sprintAttack','risingAttack'].includes(this.state)) { this.combo = Math.min(10, this.combo + 1); this.chainStage = this.attackStage; this.comboTimer = 900; } this.strikeConfirmed = true; } }
-  draw() { const image = imageFor(framePath(this, this.state, this.frame)); if (!image.complete) return; ctx.save(); if (this.hitFlash > 0) ctx.globalAlpha = .55; ctx.translate(this.x, this.y); ctx.scale(this.facing * FIGHTER_SCALE, FIGHTER_SCALE); ctx.drawImage(image, -128, -224, 256, 256); ctx.restore(); if (this.invulnerable > 0) { ctx.strokeStyle = '#f8c947'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y - 112, 65, 0, Math.PI * 2); ctx.stroke(); } }
+  draw() { const path = framePath(this, this.state, this.frame); const image = imageFor(path, fallbackFramePath(this, this.state, this.frame)); if (image.complete && image.naturalWidth) this.lastImage = image; if (!this.lastImage) return; ctx.save(); if (this.hitFlash > 0) ctx.globalAlpha = .55; ctx.translate(this.x, this.y); ctx.scale(this.facing * FIGHTER_SCALE, FIGHTER_SCALE); ctx.drawImage(this.lastImage, -128, -224, 256, 256); ctx.restore(); if (this.invulnerable > 0) { ctx.strokeStyle = '#f8c947'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y - 112, 65, 0, Math.PI * 2); ctx.stroke(); } }
 }
 
 let running = false, paused = false, roundTime = 99, last = performance.now(), secondClock = 0;
@@ -184,6 +208,8 @@ document.querySelector('#menu-button').addEventListener('click', returnToMenu);
 soundButton.addEventListener('click', () => { soundEnabled = !soundEnabled; if (soundEnabled) playMusic(running ? fightMusic : menuMusic); else stopMusic(); updateSoundButton(); });
 populateOutfits();
 updateSelectSprites();
+setCostume(selectedKind, selectedCostume);
+setCostume('wolverine', costumeOptions.wolverine[0][0]);
 updateSoundButton();
 document.addEventListener('pointerdown', () => { if (!running && !paused) playMusic(menuMusic); }, { once: true });
 requestAnimationFrame(loop);
