@@ -19,11 +19,11 @@ const cpuOptions = document.querySelector('#cpu-options');
 const stageSelect = document.querySelector('#stage-select');
 const stageBackground = document.querySelector('#stage-background');
 const stageOptions = [
-  { id: 'default', label: 'DEFAULT ARENA', file: null },
-  { id: 'daily_bugle', label: 'DAILY BUGLE', file: 'Background-Stages/marvelvscapcom-daily-bugle-stage.gif' },
-  { id: 'blue_area_moon', label: 'BLUE AREA OF THE MOON', file: 'Background-Stages/mvc-stage-blue-area-of-the-moon.gif' },
-  { id: 'cliff_of_desolation', label: 'CLIFF OF DESOLATION', file: 'Background-Stages/mvc-stage-cliff-of-desolation.gif' },
-  { id: 'danger_room', label: 'DANGER ROOM', file: 'Background-Stages/Danger_Room_Cota.webp' },
+  { id: 'default', label: 'DEFAULT ARENA', file: null, floorOffset: 0 },
+  { id: 'daily_bugle', label: 'DAILY BUGLE', file: 'Background-Stages/marvelvscapcom-daily-bugle-stage.gif', floorOffset: 66 },
+  { id: 'blue_area_moon', label: 'BLUE AREA OF THE MOON', file: 'Background-Stages/mvc-stage-blue-area-of-the-moon.gif', floorOffset: 10 },
+  { id: 'cliff_of_desolation', label: 'CLIFF OF DESOLATION', file: 'Background-Stages/mvc-stage-cliff-of-desolation.gif', floorOffset: 74 },
+  { id: 'danger_room', label: 'DANGER ROOM', file: 'Background-Stages/Danger_Room_Cota.webp', floorOffset: -27 },
 ];
 let selectedStage = 'default';
 function populateStages() {
@@ -33,6 +33,9 @@ function populateStages() {
 function applyStage() {
   const stage = stageOptions.find(option => option.id === selectedStage) || stageOptions[0];
   stageBackground.style.backgroundImage = stage.file ? `url("${stage.file}")` : 'none';
+  FLOOR = 574 + stage.floorOffset;
+  if (p1) p1.y = FLOOR;
+  if (p2) p2.y = FLOOR;
 }
 const p1HealthBar = document.querySelector('#p1-health');
 const p2HealthBar = document.querySelector('#p2-health');
@@ -64,7 +67,7 @@ const remoteKeys = new Set();
 const remotePressed = new Set();
 
 const W = canvas.width;
-const FLOOR = 574;
+let FLOOR = 574;
 const FIGHTER_SCALE = 1.65;
 const selectAnimationFrames = {
   cyclops: Array.from({ length: 28 }, (_, frameNumber) => `Selectscreen_${String(frameNumber).padStart(2, '0')}.png`),
