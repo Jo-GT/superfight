@@ -20,10 +20,10 @@ const stageSelect = document.querySelector('#stage-select');
 const stageBackground = document.querySelector('#stage-background');
 const stageOptions = [
   { id: 'default', label: 'DEFAULT ARENA', file: null, floorOffset: 0 },
-  { id: 'daily_bugle', label: 'DAILY BUGLE', file: 'Background-Stages/marvelvscapcom-daily-bugle-stage.gif', floorOffset: 66 },
-  { id: 'blue_area_moon', label: 'BLUE AREA OF THE MOON', file: 'Background-Stages/mvc-stage-blue-area-of-the-moon.gif', floorOffset: 10 },
-  { id: 'cliff_of_desolation', label: 'CLIFF OF DESOLATION', file: 'Background-Stages/mvc-stage-cliff-of-desolation.gif', floorOffset: 74 },
-  { id: 'danger_room', label: 'DANGER ROOM', file: 'Background-Stages/Danger_Room_Cota.webp', floorOffset: -27 },
+  { id: 'daily_bugle', label: 'DAILY BUGLE', file: 'Background-Stages/marvelvscapcom-daily-bugle-stage.gif', floorOffset: 126 },
+  { id: 'blue_area_moon', label: 'BLUE AREA OF THE MOON', file: 'Background-Stages/mvc-stage-blue-area-of-the-moon.gif', floorOffset: 70 },
+  { id: 'cliff_of_desolation', label: 'CLIFF OF DESOLATION', file: 'Background-Stages/mvc-stage-cliff-of-desolation.gif', floorOffset: 134 },
+  { id: 'danger_room', label: 'DANGER ROOM', file: 'Background-Stages/Danger_Room_Cota.webp', floorOffset: 33 },
 ];
 let selectedStage = 'default';
 function populateStages() {
