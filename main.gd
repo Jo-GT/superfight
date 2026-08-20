@@ -14,6 +14,7 @@ const FIGHT_MUSIC := "res://Music/BGM.mp3"
 const CYCLOPS_ANIMATIONS := {
 	"idle": ["Idle_"],
 	"walk": ["Walk_"],
+	"run": ["Sprint_"],
 	"attack": ["Attack1_"],
 	"attack1": ["Attack1_"],
 	"attack2": ["Attack2_"],
@@ -32,6 +33,7 @@ const CYCLOPS_ANIMATIONS := {
 const WOLVERINE_ANIMATIONS := {
 	"idle": ["Idle_"],
 	"walk": ["Walk_"],
+	"run": ["Sprint_"],
 	"attack": ["Attack1_", "Attack2_"],
 	"jump": ["Jump_", "Jumpapex_", "Jumpfall_"],
 	"air_attack": ["Attackairstart_", "Attackair_", "Attackairland_"],
@@ -517,7 +519,8 @@ func _update_match(delta: float) -> void:
 	if is_zero_approx(p1_combo_timer):
 		p1_chain_stage = 0
 	var direction := Input.get_axis("ui_left", "ui_right")
-	p1_x = clampf(p1_x + direction * 260.0 * delta, 90.0, 1190.0)
+	var sprinting := direction != 0.0 and Input.is_key_pressed(KEY_SHIFT)
+	p1_x = clampf(p1_x + direction * (460.0 if sprinting else 260.0) * delta, 90.0, 1190.0)
 	if jump_pressed and is_zero_approx(p1_y - FLOOR_Y):
 		p1_vy = -620.0
 		p1_action = "jump"
@@ -535,7 +538,7 @@ func _update_match(delta: float) -> void:
 	if p1_action_time > 0.0:
 		p1_sprite.play(p1_action)
 	elif direction != 0.0:
-		p1_sprite.play("walk")
+		p1_sprite.play("run" if sprinting else "walk")
 	else:
 		p1_sprite.play("idle")
 	if attack_pressed and p1_cooldown <= 0.0:
