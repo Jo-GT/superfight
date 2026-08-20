@@ -57,6 +57,32 @@ const PROJECTILE_DAMAGE := {
 	"attack1": 4.0,
 }
 
+# Each entry is [costume_id, sprite_folder_name]. The first entry per character stays the
+# menu/CPU-opponent default, so it must remain "01 [Default]" / "04 [Blue]".
+const CYCLOPS_COSTUMES := [
+	["default", "01 [Default]"],
+	["blue", "02 [Blue]"],
+	["red", "03 [Red]"],
+	["black_yellow", "04 [Black Yellow]"],
+	["gray", "05 [Gray]"],
+	["x_factor", "06 [X-Factor]"],
+	["cable", "07 [Cable '97]"],
+	["captain_krakoa", "08 [Captain Krakoa]"],
+	["placeholder", "00 [Placeholder]"],
+]
+const WOLVERINE_COSTUMES := [
+	["blue", "04 [Blue]"],
+	["placeholder", "00 [Placeholder]"],
+	["default", "01 [Default]"],
+	["navy", "02 [Navy]"],
+	["purple", "03 [Purple]"],
+	["collab_sf", "05 [Collab - SF]"],
+	["classic", "06 [Classic]"],
+	["silver_adamantium", "07 [Silver - Adamantium]"],
+	["stealth", "08 [Stealth]"],
+	["alpha", "09 [Alpha]"],
+]
+
 var game_mode := "cpu"
 var selected_difficulty := "easy"
 var selected_kind := "cyclops"
@@ -332,22 +358,23 @@ func _choose_wolverine() -> void:
 	_warm_selected_fighter()
 	_update_menu_status()
 
+func _costume_list(kind: String) -> Array:
+	return CYCLOPS_COSTUMES if kind == "cyclops" else WOLVERINE_COSTUMES
+
 func _populate_costumes() -> void:
 	if not costume_select:
 		return
 	costume_select.clear()
-	var costumes := ["default", "red", "cable"] if selected_kind == "cyclops" else ["blue", "classic", "stealth"]
-	for costume in costumes:
-		costume_select.add_item(costume.to_upper())
+	for pair in _costume_list(selected_kind):
+		costume_select.add_item(pair[0].replace("_", " ").to_upper())
 	costume_select.select(0)
 	if character_status:
-		character_status.text = "%s // %s" % [selected_kind.to_upper(), selected_costume.to_upper()]
+		character_status.text = "%s // %s" % [selected_kind.to_upper(), selected_costume.replace("_", " ").to_upper()]
 
 func _choose_costume(index: int) -> void:
-	var costumes := ["default", "red", "cable"] if selected_kind == "cyclops" else ["blue", "classic", "stealth"]
-	selected_costume = costumes[index]
+	selected_costume = _costume_list(selected_kind)[index][0]
 	_warm_selected_fighter()
-	character_status.text = "%s // %s" % [selected_kind.to_upper(), selected_costume.to_upper()]
+	character_status.text = "%s // %s" % [selected_kind.to_upper(), selected_costume.replace("_", " ").to_upper()]
 
 func _warm_selected_fighter() -> void:
 	var folder := _selected_folder()
@@ -412,11 +439,11 @@ func _create_fighter_sprites() -> void:
 	add_child(p2_sprite)
 
 func _selected_folder() -> String:
-	if selected_kind == "cyclops":
-		var cyclops_costumes := {"default": "01 [Default]", "red": "03 [Red]", "cable": "07 [Cable '97]"}
-		return "res://Sprites/Cyclops/%s/" % cyclops_costumes[selected_costume]
-	var wolverine_costumes := {"blue": "04 [Blue]", "classic": "06 [Classic]", "stealth": "08 [Stealth]"}
-	return "res://Sprites/Wolverine/%s/" % wolverine_costumes[selected_costume]
+	var character_folder := "Cyclops" if selected_kind == "cyclops" else "Wolverine"
+	for pair in _costume_list(selected_kind):
+		if pair[0] == selected_costume:
+			return "res://Sprites/%s/%s/" % [character_folder, pair[1]]
+	return CYCLOPS_FOLDER if selected_kind == "cyclops" else WOLVERINE_FOLDER
 
 func _create_animated_fighter(folder: String) -> AnimatedSprite2D:
 	var sprite := AnimatedSprite2D.new()

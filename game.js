@@ -21,8 +21,8 @@ const lobbyStatus = document.querySelector('#lobby-status');
 const menuReadyState = document.querySelector('#menu-ready-state');
 const characterNames = { cyclops: 'CYCLOPS', wolverine: 'WOLVERINE' };
 const costumeOptions = {
-  cyclops: [['default', '01 [Default]'], ['red', '03 [Red]'], ['cable', "07 [Cable '97]"]],
-  wolverine: [['blue', '04 [Blue]'], ['classic', '06 [Classic]'], ['stealth', '08 [Stealth]']]
+  cyclops: [['default', '01 [Default]'], ['blue', '02 [Blue]'], ['red', '03 [Red]'], ['black_yellow', '04 [Black Yellow]'], ['gray', '05 [Gray]'], ['x_factor', '06 [X-Factor]'], ['cable', "07 [Cable '97]"], ['captain_krakoa', '08 [Captain Krakoa]'], ['placeholder', '00 [Placeholder]']],
+  wolverine: [['blue', '04 [Blue]'], ['placeholder', '00 [Placeholder]'], ['default', '01 [Default]'], ['navy', '02 [Navy]'], ['purple', '03 [Purple]'], ['collab_sf', '05 [Collab - SF]'], ['classic', '06 [Classic]'], ['silver_adamantium', "07 [Silver - Adamantium]"], ['stealth', '08 [Stealth]'], ['alpha', '09 [Alpha]']]
 };
 const difficultyProfiles = {
   easy: { approachSpeed: 1.2, attackChance: .018, reaction: 0, idealRange: 220, specialChance: .08 },
