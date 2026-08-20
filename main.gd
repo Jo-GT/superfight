@@ -8,6 +8,55 @@ const CYCLOPS_PROJECTILES := "res://Sprites/Cyclops/"
 const MENU_MUSIC := "res://Music/xmenmain.mp3"
 const FIGHT_MUSIC := "res://Music/BGM.mp3"
 
+# Each animation maps to an ordered list of exact frame-name prefixes (start -> main -> end).
+# Prefixes must be full/exact (trailing "_") so sibling families like "Power_" vs "Powerstart_"
+# vs "Powerair_" never bleed into each other, and multi-part moves play in the right sequence.
+const CYCLOPS_ANIMATIONS := {
+	"idle": ["Idle_"],
+	"walk": ["Walk_"],
+	"attack": ["Attack1_"],
+	"attack1": ["Attack1_"],
+	"attack2": ["Attack2_"],
+	"attack3": ["Attack3_"],
+	"attack4": ["Attack4_"],
+	"jump": ["Jump_", "Jumpapex_", "Jumpfall_"],
+	"air_attack": ["Attackairstart_", "Attackair_", "Attackairland_"],
+	"rising_attack": ["Attackrising_"],
+	"sprint_attack": ["Attacksprinting_"],
+	"power": ["Powerstart_", "Power_"],
+	"air_power": ["Powerairstart_", "Powerair_", "Powerairend_"],
+	"special": ["Special_"],
+	"dodge": ["Dodge_"],
+	"hit": ["Hitstun_"],
+}
+const WOLVERINE_ANIMATIONS := {
+	"idle": ["Idle_"],
+	"walk": ["Walk_"],
+	"attack": ["Attack1_", "Attack2_"],
+	"jump": ["Jump_", "Jumpapex_", "Jumpfall_"],
+	"air_attack": ["Attackairstart_", "Attackair_", "Attackairland_"],
+	"rising_attack": ["Attackrisingstart_", "Attackrising_"],
+	"sprint_attack": ["Attacksprinting_"],
+	"power": ["Attackchargedstart_", "Attackchargedheld_", "Attackcharged_"],
+	"air_power": ["Attackchargedstart_", "Attackchargedheld_", "Attackcharged_"],
+	"special": ["Specialstart_", "Special1_"],
+	"dodge": ["Dodge_"],
+	"hit": ["Hitstun_"],
+}
+const PROJECTILE_ANIMATIONS := {
+	"power": ["Powerprojectilestart_", "Powerprojectile_"],
+	"special": ["Specialprojectile_"],
+	"attack1": ["Attack1projectile_"],
+	"attack4": ["Attack4projectile_"],
+}
+const COMBO_WINDOW := 0.9
+const PROJECTILE_DAMAGE := {
+	"special": 24.0,
+	"power": 12.0,
+	"attack4": 10.0,
+	"attack1": 4.0,
+}
+
 var game_mode := "cpu"
 var selected_difficulty := "easy"
 var selected_kind := "cyclops"
@@ -22,6 +71,9 @@ var p1_action := "idle"
 var p1_y := FLOOR_Y
 var p1_vy := 0.0
 var p1_invulnerable := 0.0
+var p1_attack_stage := 1
+var p1_chain_stage := 0
+var p1_combo_timer := 0.0
 var p2_x := 930.0
 var p2_health := 120.0
 var p2_cooldown := 0.0
@@ -327,6 +379,9 @@ func _start_match() -> void:
 	p1_vy = 0.0
 	p1_invulnerable = 0.0
 	p1_meter = 0.0
+	p1_attack_stage = 1
+	p1_chain_stage = 0
+	p1_combo_timer = 0.0
 	p2_x = 930.0
 	p2_health = 120.0
 	p2_cooldown = 0.0
@@ -377,18 +432,9 @@ func _create_animated_fighter(folder: String) -> AnimatedSprite2D:
 func _build_fighter_frames(folder: String) -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	frames.remove_animation("default")
-	_add_animation(frames, "idle", folder, "Idle_")
-	_add_animation(frames, "walk", folder, "Walk_")
-	_add_animation(frames, "attack", folder, "Attack1_")
-	_add_animation(frames, "jump", folder, "Jump_")
-	_add_animation(frames, "air_attack", folder, "Attackair")
-	_add_animation(frames, "rising_attack", folder, "Attackrising")
-	_add_animation(frames, "sprint_attack", folder, "Attacksprinting")
-	_add_animation(frames, "power", folder, "Power")
-	_add_animation(frames, "air_power", folder, "Powerair")
-	_add_animation(frames, "special", folder, "Special")
-	_add_animation(frames, "dodge", folder, "Dodge_")
-	_add_animation(frames, "hit", folder, "Hitstun_")
+	var table: Dictionary = CYCLOPS_ANIMATIONS if folder.contains("/Cyclops/") else WOLVERINE_ANIMATIONS
+	for animation_name in table:
+		_add_animation(frames, animation_name, folder, table[animation_name])
 	return frames
 
 func _create_projectile() -> AnimatedSprite2D:
@@ -402,29 +448,36 @@ func _create_projectile() -> AnimatedSprite2D:
 func _build_projectile_frames() -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	frames.remove_animation("default")
-	_add_animation(frames, "power", CYCLOPS_PROJECTILES, "Powerprojectil")
-	_add_animation(frames, "special", CYCLOPS_PROJECTILES, "Specialprojectile_")
+	for animation_name in PROJECTILE_ANIMATIONS:
+		_add_animation(frames, animation_name, CYCLOPS_PROJECTILES, PROJECTILE_ANIMATIONS[animation_name])
 	return frames
 
-func _add_animation(frames: SpriteFrames, animation_name: String, folder: String, prefix: String) -> void:
+func _add_animation(frames: SpriteFrames, animation_name: String, folder: String, prefixes: Array) -> void:
 	var directory := DirAccess.open(folder)
 	if directory == null:
 		return
-	var filenames: Array[String] = []
+	var png_filenames: Array[String] = []
 	directory.list_dir_begin()
-	var filename := directory.get_next()
-	while filename != "":
-		if not directory.current_is_dir() and filename.begins_with(prefix) and filename.ends_with(".png"):
-			filenames.append(filename)
-		filename = directory.get_next()
+	var entry := directory.get_next()
+	while entry != "":
+		if not directory.current_is_dir() and entry.ends_with(".png"):
+			png_filenames.append(entry)
+		entry = directory.get_next()
 	directory.list_dir_end()
-	filenames.sort()
-	if filenames.is_empty():
+	var ordered_filenames: Array[String] = []
+	for prefix in prefixes:
+		var matches: Array[String] = []
+		for filename in png_filenames:
+			if filename.begins_with(prefix):
+				matches.append(filename)
+		matches.sort()
+		ordered_filenames.append_array(matches)
+	if ordered_filenames.is_empty():
 		return
 	frames.add_animation(animation_name)
 	frames.set_animation_speed(animation_name, 10.0)
 	frames.set_animation_loop(animation_name, true)
-	for frame_name in filenames:
+	for frame_name in ordered_filenames:
 		frames.add_frame(animation_name, load(folder + frame_name))
 
 func _update_match(delta: float) -> void:
@@ -433,6 +486,9 @@ func _update_match(delta: float) -> void:
 	p1_action_time = maxf(0.0, p1_action_time - delta)
 	p2_action_time = maxf(0.0, p2_action_time - delta)
 	p1_invulnerable = maxf(0.0, p1_invulnerable - delta)
+	p1_combo_timer = maxf(0.0, p1_combo_timer - delta)
+	if is_zero_approx(p1_combo_timer):
+		p1_chain_stage = 0
 	var direction := Input.get_axis("ui_left", "ui_right")
 	p1_x = clampf(p1_x + direction * 260.0 * delta, 90.0, 1190.0)
 	if jump_pressed and is_zero_approx(p1_y - FLOOR_Y):
@@ -457,22 +513,35 @@ func _update_match(delta: float) -> void:
 		p1_sprite.play("idle")
 	if attack_pressed and p1_cooldown <= 0.0:
 		p1_cooldown = 0.45
-		p1_action = "air_attack" if not is_zero_approx(p1_y - FLOOR_Y) else ("rising_attack" if jump_pressed else "attack")
+		var airborne := not is_zero_approx(p1_y - FLOOR_Y)
+		var grounded_basic_attack := not airborne and not jump_pressed
+		if grounded_basic_attack and selected_kind == "cyclops":
+			p1_attack_stage = mini(4, p1_chain_stage + 1) if p1_combo_timer > 0.0 else 1
+			p1_action = "attack%d" % p1_attack_stage
+		else:
+			p1_attack_stage = 1
+			p1_action = "air_attack" if airborne else ("rising_attack" if jump_pressed else "attack")
 		p1_action_time = 0.65
 		p1_sprite.play(p1_action)
 		if absf(p2_x - p1_x) < 180.0:
 			p2_health = maxf(0.0, p2_health - 6.0)
 			p1_meter = minf(3.0, p1_meter + 0.35)
+			p1_chain_stage = p1_attack_stage
+			p1_combo_timer = COMBO_WINDOW
+			if grounded_basic_attack and selected_kind == "cyclops" and (p1_attack_stage == 1 or p1_attack_stage == 4) and not projectile_active:
+				_start_projectile("attack%d" % p1_attack_stage)
 	if power_pressed and p1_meter >= 1.0 and not projectile_active:
 		p1_meter -= 1.0
 		p1_action = "air_power" if not is_zero_approx(p1_y - FLOOR_Y) and p1_sprite.sprite_frames.has_animation("air_power") else "power"
 		p1_action_time = 0.8
-		_start_projectile("power")
+		if selected_kind == "cyclops":
+			_start_projectile("power")
 	if special_pressed and p1_meter >= 3.0 and not projectile_active:
 		p1_meter = 0.0
 		p1_action = "special"
 		p1_action_time = 1.2
-		_start_projectile("special")
+		if selected_kind == "cyclops":
+			_start_projectile("special")
 	_update_projectile(delta)
 	var distance := p1_x - p2_x
 	if absf(distance) > 190.0:
@@ -520,7 +589,8 @@ func _update_projectile(delta: float) -> void:
 	projectile_x += projectile_direction * 520.0 * delta
 	projectile_sprite.position = Vector2(projectile_x, FLOOR_Y - 150.0)
 	if absf(p2_x - projectile_x) < 75.0:
-		p2_health = maxf(0.0, p2_health - (24.0 if projectile_sprite.animation == "special" else 12.0))
+		var damage: float = PROJECTILE_DAMAGE.get(projectile_sprite.animation, 12.0)
+		p2_health = maxf(0.0, p2_health - damage)
 		projectile_active = false
 		projectile_sprite.visible = false
 	if projectile_x > 1400.0:

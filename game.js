@@ -87,7 +87,7 @@ function fallbackFramePath(fighter, state, frame) {
 }
 function preloadFighterAssets(kind) {
   const root = assets[kind].root;
-  const states = Object.keys(assets[kind]).filter(state => Array.isArray(assets[kind][state]));
+  const states = Object.keys(assets[kind]).filter(state => state !== 'attackStages' && Array.isArray(assets[kind][state]));
   states.forEach(state => assets[kind][state].forEach(frame => imageFor(root + frame, defaultRoot(kind) + frame)));
   if (assets[kind].attackStages) assets[kind].attackStages.flat().forEach(frame => imageFor(root + frame, defaultRoot(kind) + frame));
 }
