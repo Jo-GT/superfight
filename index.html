@@ -28,6 +28,7 @@
           </div>
           <div class="menu-options">
             <label>OUTFIT<select id="outfit-select"></select></label>
+            <label>STAGE<select id="stage-select"></select></label>
             <div class="mode-picker"><span>GAME MODE</span><div class="mode-options"><button class="mode selected" data-mode="cpu" type="button">1V1 CPU</button><button class="mode" data-mode="online" type="button">1V1 ONLINE</button></div></div>
             <div id="cpu-options" class="difficulty-picker"><span>CPU DIFFICULTY</span><div class="difficulty-options"><button class="difficulty selected" data-difficulty="easy" type="button">EASY</button><button class="difficulty" data-difficulty="normal" type="button">NORMAL</button><button class="difficulty" data-difficulty="hard" type="button">HARD</button></div></div>
             <div id="online-options" class="online-options hidden"><span>ONLINE LOBBY</span><div class="online-actions"><button id="create-lobby-button" type="button">CREATE LOBBY</button><label>JOIN CODE<input id="join-code" maxlength="5" autocomplete="off" placeholder="ABCDE"></label><button id="join-lobby-button" type="button">JOIN LOBBY</button></div><p id="lobby-status">Connect to the match server to play online.</p></div>
@@ -49,6 +50,7 @@
         </div>
       </div>
       <div class="arena-wrap">
+        <div id="stage-background" class="stage-background"></div>
         <canvas id="arena" width="1280" height="720" aria-label="Playable fighting game arena"></canvas>
         <div class="scanlines"></div>
         <div id="pause-overlay" class="pause-overlay hidden">

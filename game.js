@@ -16,6 +16,24 @@ const menuMusic = document.querySelector('#menu-music');
 const fightMusic = document.querySelector('#fight-music');
 const soundButton = document.querySelector('#sound-button');
 const cpuOptions = document.querySelector('#cpu-options');
+const stageSelect = document.querySelector('#stage-select');
+const stageBackground = document.querySelector('#stage-background');
+const stageOptions = [
+  { id: 'default', label: 'DEFAULT ARENA', file: null },
+  { id: 'daily_bugle', label: 'DAILY BUGLE', file: 'Background-Stages/marvelvscapcom-daily-bugle-stage.gif' },
+  { id: 'blue_area_moon', label: 'BLUE AREA OF THE MOON', file: 'Background-Stages/mvc-stage-blue-area-of-the-moon.gif' },
+  { id: 'cliff_of_desolation', label: 'CLIFF OF DESOLATION', file: 'Background-Stages/mvc-stage-cliff-of-desolation.gif' },
+  { id: 'danger_room', label: 'DANGER ROOM', file: 'Background-Stages/Danger_Room_Cota.webp' },
+];
+let selectedStage = 'default';
+function populateStages() {
+  stageSelect.innerHTML = stageOptions.map(stage => `<option value="${stage.id}">${stage.label}</option>`).join('');
+  stageSelect.value = selectedStage;
+}
+function applyStage() {
+  const stage = stageOptions.find(option => option.id === selectedStage) || stageOptions[0];
+  stageBackground.style.backgroundImage = stage.file ? `url("${stage.file}")` : 'none';
+}
 const p1HealthBar = document.querySelector('#p1-health');
 const p2HealthBar = document.querySelector('#p2-health');
 const p1MeterBar = document.querySelector('#p1-meter');
@@ -203,7 +221,7 @@ const skyGradient = ctx.createLinearGradient(0, 0, 0, FLOOR);
 skyGradient.addColorStop(0, '#172b35');
 skyGradient.addColorStop(1, '#50605b');
 ctx.font = '700 16px Space Mono';
-function drawArena() { ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, W, canvas.height); ctx.fillStyle = '#253942'; ctx.fillRect(0, 340, W, FLOOR - 340); ctx.strokeStyle = 'rgba(103,225,224,.18)'; ctx.lineWidth = 2; ctx.beginPath(); for (let x = -600; x < W + 600; x += 80) { ctx.moveTo(W / 2, FLOOR); ctx.lineTo(x, canvas.height); } ctx.stroke(); ctx.strokeStyle = 'rgba(248,201,71,.32)'; ctx.beginPath(); ctx.moveTo(0, FLOOR); ctx.lineTo(W, FLOOR); ctx.stroke(); ctx.fillStyle = '#17252b'; ctx.fillRect(0, FLOOR + 3, W, canvas.height - FLOOR); ctx.fillStyle = 'rgba(248,201,71,.5)'; ctx.fillText('SECTOR 09', 42, 48); ctx.fillText('NO EXIT', W - 130, 48); }
+function drawArena() { if (selectedStage !== 'default') { ctx.clearRect(0, 0, W, canvas.height); return; } ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, W, canvas.height); ctx.fillStyle = '#253942'; ctx.fillRect(0, 340, W, FLOOR - 340); ctx.strokeStyle = 'rgba(103,225,224,.18)'; ctx.lineWidth = 2; ctx.beginPath(); for (let x = -600; x < W + 600; x += 80) { ctx.moveTo(W / 2, FLOOR); ctx.lineTo(x, canvas.height); } ctx.stroke(); ctx.strokeStyle = 'rgba(248,201,71,.32)'; ctx.beginPath(); ctx.moveTo(0, FLOOR); ctx.lineTo(W, FLOOR); ctx.stroke(); ctx.fillStyle = '#17252b'; ctx.fillRect(0, FLOOR + 3, W, canvas.height - FLOOR); ctx.fillStyle = 'rgba(248,201,71,.5)'; ctx.fillText('SECTOR 09', 42, 48); ctx.fillText('NO EXIT', W - 130, 48); }
 function updateHud() { p1HealthBar.style.width = `${p1.health / p1.maxHealth * 100}%`; p2HealthBar.style.width = `${p2.health / p2.maxHealth * 100}%`; p1MeterBar.style.width = `${p1.meter / 3 * 100}%`; p2MeterBar.style.width = `${p2.meter / 3 * 100}%`; p1ComboLabel.textContent = `x${p1.combo}`; p2ComboLabel.textContent = `x${p2.combo}`; }
 function loop(now) { const dt = Math.min(34, now - last); last = now; updateSelectAnimation(dt); if (running && !paused) { secondClock += dt; if (secondClock > 1000) { secondClock = 0; roundTime = Math.max(0, roundTime - 1); } const p1Keys = gameMode === 'online' && onlinePlayerNumber !== 1 ? remoteKeys : keys; const p1Pressed = gameMode === 'online' && onlinePlayerNumber !== 1 ? remotePressed : pressed; const p2Keys = gameMode === 'online' && onlinePlayerNumber === 1 ? remoteKeys : keys; const p2Pressed = gameMode === 'online' && onlinePlayerNumber === 1 ? remotePressed : pressed; p1.update(dt, p2, p1Keys, p1Pressed); p2.update(dt, p1, p2Keys, p2Pressed); projectiles = projectiles.filter(projectile => projectile.update(dt, projectile.owner === p1 ? p2 : p1)); updateHud(); if (p1.health <= 0 || p2.health <= 0 || roundTime <= 0) { running = false; const winner = p1.health > p2.health ? 'CYCLOPS TAKES IT' : 'WOLVERINE TAKES IT'; message.textContent = roundTime <= 0 && p1.health === p2.health ? 'TIME' : winner; footerState.textContent = 'PRESS ENTER TO REMATCH'; overlay.classList.remove('hidden'); overlay.querySelector('h2').textContent = message.textContent; overlay.querySelector('.eyebrow').textContent = 'ROUND OVER'; } timerEl.textContent = String(roundTime).padStart(2, '0'); } drawArena(); p1.draw(); p2.draw(); projectiles.forEach(projectile => projectile.draw()); pressed.clear(); remotePressed.clear(); requestAnimationFrame(loop); }
 function setPauseView(showMoves) { pauseMenu.classList.toggle('hidden', showMoves); moveList.classList.toggle('hidden', !showMoves); moveListName.textContent = characterNames[selectedKind]; }
@@ -240,6 +258,7 @@ document.querySelectorAll('.mode').forEach(button => button.addEventListener('cl
 document.querySelector('#create-lobby-button').addEventListener('click', () => { onlineReady = false; openLobby({ type: 'create' }); });
 document.querySelector('#join-lobby-button').addEventListener('click', () => { onlineReady = false; openLobby({ type: 'join', code: document.querySelector('#join-code').value }); });
 outfitSelect.addEventListener('change', () => { selectedCostume = outfitSelect.value; selectFrame = 0; updateSelectSprites(); });
+stageSelect.addEventListener('change', () => { selectedStage = stageSelect.value; applyStage(); });
 document.querySelector('#start-button').addEventListener('click', start);
 document.querySelector('#rematch-button').addEventListener('click', start);
 document.querySelector('#resume-button').addEventListener('click', () => { if (paused) togglePause(); });
@@ -249,6 +268,8 @@ document.querySelector('#menu-button').addEventListener('click', returnToMenu);
 soundButton.addEventListener('click', () => { soundEnabled = !soundEnabled; if (soundEnabled) playMusic(running ? fightMusic : menuMusic); else stopMusic(); updateSoundButton(); });
 populateOutfits();
 updateSelectSprites();
+populateStages();
+applyStage();
 setCostume(selectedKind, selectedCostume);
 setCostume('wolverine', costumeOptions.wolverine[0][0]);
 updateSoundButton();
