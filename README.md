@@ -23,7 +23,8 @@ The GitHub Pages site for the `main` branch is available at https://jo-gt.github
 | Input | Action |
 | --- | --- |
 | Left / Right | Move and face the opponent |
-| Up | Jump |
+| Shift + Left / Right | Sprint |
+| Up | Jump; Left / Right drifts you mid-air |
 | Down | Dodge |
 | X | Basic attack; clean hits build meter. Press during a jump for an aerial attack |
 | Left / Right + X | Running attack |
