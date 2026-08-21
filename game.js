@@ -140,6 +140,11 @@ function preloadFighterAssets(kind) {
   if (assets[kind].attackStages) assets[kind].attackStages.flat().forEach(frame => images.push(imageFor(root + frame, defaultRoot(kind) + frame)));
   return images;
 }
+function preloadProjectileAssets() {
+  const root = assets.cyclops.projectileRoot;
+  const frameLists = [projectileFrames.attack1, projectileFrames.attack4, powerBeamStartFrames, powerBeamBodyFrames, powerBeamHeadFrames, powerBeamEndFrames, specialProjectileFrames];
+  return frameLists.flat().map(frame => imageFor(root + frame));
+}
 function waitForImages(images) {
   return Promise.all(images.map(image => image.complete ? Promise.resolve() : new Promise(resolve => {
     image.addEventListener('load', resolve, { once: true });
@@ -303,7 +308,7 @@ function start() {
   menuScreen.classList.add('hidden');
   overlay.classList.add('hidden');
   footerState.textContent = 'LOADING FIGHTERS...';
-  Promise.all([waitForImages(preloadFighterAssets(selectedKind)), waitForImages(preloadFighterAssets(opponentKind))]).then(() => {
+  Promise.all([waitForImages(preloadFighterAssets(selectedKind)), waitForImages(preloadFighterAssets(opponentKind)), waitForImages(preloadProjectileAssets())]).then(() => {
     loadingMatch = false;
     projectiles = [];
     paused = false;
