@@ -114,6 +114,13 @@ const projectileFrames = {
   power: ['Powerprojectilestart_00.png','Powerprojectilestart_01.png','Powerprojectilestart_02.png','Powerprojectilestart_03.png','Powerprojectile_00.png','Powerprojectile_01.png','Powerprojectile_02.png','Powerprojectile_03.png','Powerprojectile_04.png','Powerprojectile_05.png','Powerprojectile_06.png','Powerprojectile_07.png'],
   special: specialProjectileFrames
 };
+// The power beam's "start"/"body" frames are a tileable 32x48 strip, not a standalone sprite -- they
+// need to be stretched to span the distance travelled, capped with a bright head at the leading tip
+// (Powerprojectilebase_*, despite the name) and a one-shot dissipation burst (Powerprojectileend_*).
+const powerBeamStartFrames = ['Powerprojectilestart_00.png','Powerprojectilestart_01.png','Powerprojectilestart_02.png','Powerprojectilestart_03.png'];
+const powerBeamBodyFrames = ['Powerprojectile_00.png','Powerprojectile_01.png','Powerprojectile_02.png','Powerprojectile_03.png','Powerprojectile_04.png','Powerprojectile_05.png','Powerprojectile_06.png','Powerprojectile_07.png'];
+const powerBeamHeadFrames = ['Powerprojectilebase_00.png','Powerprojectilebase_01.png','Powerprojectilebase_02.png','Powerprojectilebase_03.png','Powerprojectilebase_04.png','Powerprojectilebase_05.png','Powerprojectilebase_06.png','Powerprojectilebase_07.png'];
+const powerBeamEndFrames = ['Powerprojectileend_00.png','Powerprojectileend_01.png','Powerprojectileend_02.png','Powerprojectileend_03.png','Powerprojectileend_04.png','Powerprojectileend_05.png','Powerprojectileend_06.png','Powerprojectileend_07.png','Powerprojectileend_08.png','Powerprojectileend_09.png'];
 
 function setCostume(kind, costume) {
   const folder = costumeOptions[kind].find(([id]) => id === costume)?.[1] || costumeOptions[kind][0][1];
@@ -195,9 +202,49 @@ const DOWN_HOLD_MS = 700;
 const ONE_SHOT_NEXT = { attack: 'idle', airAttack: 'idle', airPower: 'idle', sprintAttack: 'idle', risingAttack: 'idle', power: 'idle', special: 'idle', dodge: 'idle', hit: 'idle', kd: 'down', downgetup: 'idle', land: 'idle', walkStart: 'walk', walkEnd: 'idle', runStart: 'run', runEnd: 'idle' };
 
 class Projectile {
-  constructor(owner, type) { this.owner = owner; this.type = type; this.x = owner.x + owner.facing * (type === 'special' ? 20 : 105); this.y = owner.y - (type === 'special' ? 120 : type === 'attack1' || type === 'attack4' ? 115 : 95); this.direction = owner.facing; this.frame = 0; this.frameClock = 0; this.age = 0; this.hit = false; this.speed = type === 'attack4' ? 12 : 10; this.damage = type === 'special' ? 24 : type === 'attack4' ? 10 : type === 'attack1' ? 4 : 12; }
-  update(dt, opponent) { this.age += dt; this.frameClock += dt; this.direction = this.owner.facing; if (this.type === 'special') { this.x = this.owner.x + this.direction * 20; this.y = this.owner.y - 120; } else this.x += this.direction * this.speed * dt / 16; if (this.frameClock > (this.type === 'special' ? 42 : 75)) { this.frameClock = 0; this.frame += 1; } const distanceFromOwner = (opponent.x - this.owner.x) * this.direction; const specialHit = this.type === 'special' && distanceFromOwner > 0 && distanceFromOwner < 520 && Math.abs(opponent.y - this.y) < 260; const regularHit = this.type !== 'special' && Math.abs(opponent.x - this.x) < 75 && Math.abs(opponent.y - this.y) < 150; if (!this.hit && (specialHit || regularHit)) { opponent.takeHit(this.damage, this.direction * 34); this.owner.meter = Math.min(3, this.owner.meter + .6); if (this.type === 'attack1' || this.type === 'attack4') { this.owner.combo = Math.min(10, this.owner.combo + 1); this.owner.chainStage = this.owner.attackStage; } this.owner.comboTimer = 900; this.hit = true; } const specialActive = this.type === 'special' && this.frame < projectileFrames.special.length; return this.type === 'special' ? specialActive && this.age < 6000 : this.age < 1100 && this.x > -250 && this.x < W + 250 && !this.hit; }
-  draw() { const list = projectileFrames[this.type]; const path = assets.cyclops.projectileRoot + list[Math.min(this.frame, list.length - 1)]; const image = imageFor(path); if (!image.complete || !image.naturalWidth) return; const targetHeight = this.type === 'special' ? 240 : this.type === 'attack4' ? 140 : this.type === 'attack1' ? 110 : 140; const drawHeight = targetHeight; const drawWidth = image.naturalWidth / image.naturalHeight * drawHeight; ctx.save(); ctx.translate(this.x, this.y); ctx.scale(this.direction, 1); ctx.globalAlpha = this.type === 'special' ? .98 : 1; ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight); ctx.restore(); }
+  constructor(owner, type) { this.owner = owner; this.type = type; this.x = owner.x + owner.facing * (type === 'special' ? 20 : 105); this.originX = this.x; this.y = owner.y - (type === 'special' ? 120 : type === 'attack1' || type === 'attack4' ? 115 : 95); this.direction = owner.facing; this.frame = 0; this.frameClock = 0; this.age = 0; this.hit = false; this.impactAge = null; this.speed = type === 'attack4' ? 12 : 10; this.damage = type === 'special' ? 24 : type === 'attack4' ? 10 : type === 'attack1' ? 4 : 12; }
+  update(dt, opponent) {
+    this.age += dt; this.frameClock += dt; this.direction = this.owner.facing;
+    if (this.type === 'power' && this.impactAge !== null) { this.impactAge += dt; if (this.frameClock > 55) { this.frameClock = 0; this.frame += 1; } return this.impactAge < 420; }
+    if (this.type === 'special') { this.x = this.owner.x + this.direction * 20; this.y = this.owner.y - 120; } else this.x += this.direction * this.speed * dt / 16;
+    if (this.frameClock > (this.type === 'special' ? 42 : 75)) { this.frameClock = 0; this.frame += 1; }
+    const distanceFromOwner = (opponent.x - this.owner.x) * this.direction; const specialHit = this.type === 'special' && distanceFromOwner > 0 && distanceFromOwner < 520 && Math.abs(opponent.y - this.y) < 260; const regularHit = this.type !== 'special' && Math.abs(opponent.x - this.x) < 75 && Math.abs(opponent.y - this.y) < 150;
+    if (!this.hit && (specialHit || regularHit)) { opponent.takeHit(this.damage, this.direction * 34); this.owner.meter = Math.min(3, this.owner.meter + .6); if (this.type === 'attack1' || this.type === 'attack4') { this.owner.combo = Math.min(10, this.owner.combo + 1); this.owner.chainStage = this.owner.attackStage; } this.owner.comboTimer = 900; this.hit = true; if (this.type === 'power') { this.impactAge = 0; this.frame = 0; this.frameClock = 0; return true; } }
+    if (this.type === 'power' && this.age >= 1100) { this.impactAge = 0; this.frame = 0; this.frameClock = 0; return true; }
+    const specialActive = this.type === 'special' && this.frame < projectileFrames.special.length;
+    return this.type === 'special' ? specialActive && this.age < 6000 : this.age < 1100 && this.x > -250 && this.x < W + 250 && !this.hit;
+  }
+  draw() {
+    if (this.type === 'power') { this.drawBeam(); return; }
+    const list = projectileFrames[this.type]; const path = assets.cyclops.projectileRoot + list[Math.min(this.frame, list.length - 1)]; const image = imageFor(path); if (!image.complete || !image.naturalWidth) return;
+    const targetHeight = this.type === 'special' ? 420 : this.type === 'attack4' ? 140 : this.type === 'attack1' ? 110 : 140;
+    const anchorFraction = this.type === 'special' ? 0.53 : 0.5;
+    const drawHeight = targetHeight; const drawWidth = image.naturalWidth / image.naturalHeight * drawHeight;
+    ctx.save(); ctx.translate(this.x, this.y); ctx.scale(this.direction, 1); ctx.globalAlpha = this.type === 'special' ? .98 : 1;
+    ctx.drawImage(image, -drawWidth * anchorFraction, -drawHeight / 2, drawWidth, drawHeight);
+    ctx.restore();
+  }
+  drawBeam() {
+    const root = assets.cyclops.projectileRoot;
+    const beamHeight = 46;
+    if (this.impactAge !== null) {
+      const image = imageFor(root + powerBeamEndFrames[Math.min(this.frame, powerBeamEndFrames.length - 1)]);
+      if (!image.complete || !image.naturalWidth) return;
+      const h = 96, w = image.naturalWidth / image.naturalHeight * h;
+      ctx.save(); ctx.translate(this.x, this.y); ctx.drawImage(image, -w / 2, -h / 2, w, h); ctx.restore();
+      return;
+    }
+    const bodyList = this.age < 90 ? powerBeamStartFrames : powerBeamBodyFrames;
+    const bodyImage = imageFor(root + bodyList[Math.min(this.frame, bodyList.length - 1)]);
+    const length = Math.max(4, Math.abs(this.x - this.originX));
+    const left = Math.min(this.x, this.originX);
+    if (bodyImage.complete && bodyImage.naturalWidth) ctx.drawImage(bodyImage, left, this.y - beamHeight / 2, length, beamHeight);
+    const headImage = imageFor(root + powerBeamHeadFrames[Math.min(this.frame, powerBeamHeadFrames.length - 1)]);
+    if (headImage.complete && headImage.naturalWidth) {
+      const h = beamHeight * 1.6, w = headImage.naturalWidth / headImage.naturalHeight * h;
+      ctx.save(); ctx.translate(this.x, this.y); ctx.scale(this.direction, 1); ctx.drawImage(headImage, -w / 2, -h / 2, w, h); ctx.restore();
+    }
+  }
 }
 
 class Fighter {
